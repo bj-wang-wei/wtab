@@ -2098,7 +2098,7 @@
                   })
                   .join('<span>·</span>');
               } else {
-                linksEl.innerHTML = '<a href="https://github.com/" target="_blank" rel="noopener">GitHub</a><span>·</span><a href="/health" target="_blank" rel="noopener">运行状态</a>';
+                linksEl.innerHTML = '<a href="https://github.com/bj-wang-wei/wtab" target="_blank" rel="noopener">GitHub</a><span>·</span><a href="/health" target="_blank" rel="noopener">运行状态</a>';
               }
               // Contact info
               const email = (d.email || "").trim();

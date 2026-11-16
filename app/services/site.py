@@ -23,8 +23,8 @@ DEFAULTS: dict[str, str] = {
     "appName": "wTab书签",
     "appVersion": "1.0.0",
     "appDesc": "一个安静的浏览器起始页：书签、分类、壁纸和搜索引擎都放在一屏里。",
-    "appLinks": 'GitHub:https://github.com/|运行状态:/health',
-    "aboutMe": '''<p style="margin:0 0 4px;">Wtab 书签 © 2025 — 开源、轻量、安静。</p>
+    "appLinks": 'GitHub:https://github.com/bj-wang-wei/wtab|运行状态:/health',
+    "aboutMe": '''<p style="margin:0 0 4px;">wTab 书签 © 2026 — 开源、轻量、安静。</p>
 <p style="margin:0;font-size:12px;opacity:.6;">基于 MIT License 协议，欢迎 Star ⭐</p>''',
     "privacy": "",
     "smtp_host": "smtp.qq.com",
