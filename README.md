@@ -99,6 +99,8 @@ podman compose -f podman-compose_postgresql.yml up -d --build  # 带 PostgreSQL 
 
 镜像用 `Containerfile` 构建（`.containerignore` 控制构建上下文）。Windows/macOS 上先 `podman machine init && podman machine start`。
 
+compose 里的镜像名是 `docker.io/bjwangweigmail/wtab:latest`：本机没有该镜像时会自动从 Docker Hub 拉取，想用发布的镜像也可以先 `podman pull docker.io/bjwangweigmail/wtab:latest`；`--build` 则改用当前源码本地构建。
+
 首次启动访问 `/install` 走网页安装向导。每种数据库的容器数据放在各自的目录（`data/`、`data/mysql/`、`data/postgresql/`），互不干扰；想重装就删掉对应目录再 `up`。
 
 ### 数据库
