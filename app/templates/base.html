@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN"{% if color_scheme %} data-color-scheme="{{ color_scheme }}"{% endif %}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    // 服务端不知道客户端配色：没有显式主题（跟随系统）时按系统偏好补上，避免首屏闪错主题
+    (function () {
+      var el = document.documentElement;
+      if (!el.hasAttribute("data-color-scheme") && window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: light)").matches) {
+        el.setAttribute("data-color-scheme", "light");
+      }
+    })();
+  </script>
+  <title>{% block title %}{{ meta.title or app_name }}{% endblock %}</title>
+  {% if meta.keywords %}<meta name="keywords" content="{{ meta.keywords }}">{% endif %}
+  {% if meta.description %}<meta name="description" content="{{ meta.description }}">{% endif %}
+  <link rel="icon" href="{{ meta.favicon_url }}">
+  {% if meta.customHead %}{{ meta.customHead | safe }}{% endif %}
+  {% block head %}{% endblock %}
+  <link rel="stylesheet" href="{{ static_prefix }}/app/app.css">
+  {% block head_after %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+{% block body %}{% endblock %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

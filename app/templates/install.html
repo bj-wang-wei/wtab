@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}安装 {{ app_name }}{% endblock %}
+{% block body_class %}page-install{% endblock %}
+{% block body %}
+<main class="install">
+  <header class="install__head">
+    <h1 class="install__logo">{{ app_name }}</h1>
+    <p class="install__sub">安装向导 · v{{ appVersion }}</p>
+  </header>
+
+  <form id="install-form" class="card" autocomplete="off">
+    <section class="card__section">
+      <h2 class="card__title">数据库</h2>
+      <div class="grid">
+        <label class="field">
+          <span>类型</span>
+          <select name="db_type" id="db_type">
+            <option value="sqlite">SQLite（免配置，推荐）</option>
+            <option value="mysql">MySQL / MariaDB</option>
+            <option value="postgresql">PostgreSQL</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>库名</span>
+          <input name="table_name" value="wtab" placeholder="wtab">
+        </label>
+        <label class="field field--remote">
+          <span>主机</span>
+          <input name="db_host" value="127.0.0.1">
+        </label>
+        <label class="field field--remote">
+          <span>端口</span>
+          <input name="db_port" placeholder="3306 / 5432">
+        </label>
+        <label class="field field--remote">
+          <span>用户名</span>
+          <input name="db_username" autocomplete="off">
+        </label>
+        <label class="field field--remote">
+          <span>密码</span>
+          <input name="db_password" type="password" autocomplete="new-password">
+        </label>
+      </div>
+      <button type="button" class="btn btn--ghost" id="test-btn">测试连接</button>
+    </section>
+
+    <section class="card__section">
+      <h2 class="card__title">管理员账号</h2>
+      <div class="grid">
+        <label class="field">
+          <span>邮箱</span>
+          <input name="admin_email" type="email" placeholder="admin@example.com">
+        </label>
+        <label class="field">
+          <span>密码</span>
+          <input name="admin_password" type="password" autocomplete="new-password">
+        </label>
+      </div>
+    </section>
+
+    <section class="card__section">
+      <h2 class="card__title">站点配置</h2>
+      <div class="grid">
+        <label class="field">
+          <span>站点名称</span>
+          <input name="site_title" placeholder="wTab书签">
+        </label>
+        <label class="field">
+          <span>站点描述</span>
+          <input name="site_desc" placeholder="一个安静的浏览器起始页">
+        </label>
+        <label class="field field--check">
+          <span>关闭注册</span>
+          <input name="user_register" type="checkbox" value="1">
+        </label>
+      </div>
+    </section>
+
+    <footer class="card__foot">
+      <button type="submit" class="btn btn--primary" id="submit-btn">开始安装</button>
+    </footer>
+  </form>
+</main>
+
+<div class="install-dialog" id="msgDialog" hidden>
+  <div class="install-dialog__box" id="msgBox" role="dialog" aria-modal="true" aria-labelledby="msgTitle" tabindex="-1">
+    <h3 class="install-dialog__title" id="msgTitle">提示</h3>
+    <p class="install-dialog__text" id="msgText"></p>
+    <div class="install-dialog__actions" id="msgActions">
+      <button type="button" class="btn btn--primary" id="msgOk">确定</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const form = document.getElementById('install-form');
+  const typeSel = document.getElementById('db_type');
+
+  function payload() {
+    const data = {};
+    new FormData(form).forEach((v, k) => { data[k] = v; });
+    return data;
+  }
+  function syncRemote() {
+    const remote = typeSel.value !== 'sqlite';
+    document.querySelectorAll('.field--remote').forEach(el => { el.style.display = remote ? '' : 'none'; });
+  }
+  typeSel.addEventListener('change', syncRemote);
+  syncRemote();
+
+  const dialog = document.getElementById('msgDialog');
+  const dialogBox = document.getElementById('msgBox');
+  const dialogText = document.getElementById('msgText');
+  const dialogOk = document.getElementById('msgOk');
+  const dialogActions = document.getElementById('msgActions');
+  let dialogAfter = null;   // 关闭后要做的事（安装成功才用得到）
+  let dialogFrom = null;    // 关闭后把焦点还回去
+
+  function closeDialog() {
+    if (dialog.hidden) return;
+    dialog.hidden = true;
+    const after = dialogAfter;
+    dialogAfter = null;
+    if (dialogFrom && dialogFrom.isConnected) dialogFrom.focus();
+    if (after) after();
+  }
+
+  // kind: 'info' 进行中（不给确定按钮，免得误关）| 'ok' | 'err'
+  function say(text, kind, after) {
+    dialogText.textContent = text;
+    dialogBox.className = 'install-dialog__box is-' + kind;
+    const busy = kind === 'info';
+    dialogOk.hidden = busy;
+    dialogActions.hidden = busy;
+    dialogAfter = after || null;
+    if (dialog.hidden) dialogFrom = document.activeElement;
+    dialog.hidden = false;
+    (dialogOk.hidden ? dialogBox : dialogOk).focus();
+  }
+
+  dialogOk.addEventListener('click', closeDialog);
+  dialog.addEventListener('click', (e) => { if (e.target === dialog) closeDialog(); });
+  // 没做焦点陷阱：弹窗只有一个按钮，Tab 最多跑到页面后面，Esc 随时能关
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDialog(); });
+
+  async function post(url) {
+    try {
+      return await fetch(url, {
+        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload())
+      }).then(r => r.json());
+    } catch (e) {
+      return {code: 0, msg: '请求失败：服务可能没在运行，请稍后重试。'};
+    }
+  }
+
+  document.getElementById('test-btn').addEventListener('click', async () => {
+    say('正在测试连接…', 'info');
+    const res = await post('/install/testDb');
+    say(res.msg, res.code === 200 ? 'ok' : 'err');
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    say('正在安装，请稍候…', 'info');
+    const res = await post('/install/install');
+    if (res.code === 200) {
+      say('安装成功，点「确定」进入站点。', 'ok', () => { location.href = '/'; });
+    } else {
+      say(res.msg, 'err');
+    }
+  });
+</script>
+{% endblock %}

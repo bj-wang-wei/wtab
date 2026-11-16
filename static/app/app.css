@@ -1,0 +1,224 @@
+:root {
+  color-scheme: dark;
+  --bg: #141414;
+  --panel: rgba(255, 255, 255, .05);
+  --panel-strong: #1c1c1c;
+  --line: rgba(255, 255, 255, .12);
+  --text: #eaeaea;
+  --text-dim: #9a9a9a;
+  --accent: #4f8cff;
+  --ok: #3ecf8e;
+  --err: #ff6b6b;
+  --field-bg: rgba(0, 0, 0, .35);
+  --radius: 14px;
+}
+
+[data-color-scheme="light"] {
+  color-scheme: light;
+  --bg: #f5f5f5;
+  --panel: rgba(0, 0, 0, .04);
+  --panel-strong: #eaeaea;
+  --line: rgba(0, 0, 0, .1);
+  --text: #222;
+  --text-dim: #666;
+  --accent: #4f8cff;
+  --ok: #3ecf8e;
+  --err: #e53935;
+  --field-bg: #fff;
+  --radius: 14px;
+}
+
+/* 没有显式指定主题的页面（安装向导）跟随系统；数值与上面亮色一套相同，改一处要同步另一处 */
+@media (prefers-color-scheme: light) {
+  :root:not([data-color-scheme]) {
+    color-scheme: light;
+    --bg: #f5f5f5;
+    --panel: rgba(0, 0, 0, .04);
+    --panel-strong: #eaeaea;
+    --line: rgba(0, 0, 0, .1);
+    --text: #222;
+    --text-dim: #666;
+    --accent: #4f8cff;
+    --ok: #3ecf8e;
+    --err: #e53935;
+    --field-bg: #fff;
+    --radius: 14px;
+  }
+}
+
+* { box-sizing: border-box; }
+
+/* hidden 属性必须能压过组件自身的 display（.modal/.drawer/.popup 等都是 display:grid），
+   否则所有弹层会永久显示且关不掉。 */
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: -apple-system, "Segoe UI", "Microsoft YaHei", Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+a { color: var(--accent); text-decoration: none; }
+
+/* ---------- 安装页 ---------- */
+.page-install { display: flex; align-items: center; justify-content: center; padding: 40px 16px; }
+
+.install { width: 100%; max-width: 640px; }
+.install__head { text-align: center; margin-bottom: 28px; }
+.install__logo { margin: 0; font-size: 30px; letter-spacing: 2px; }
+.install__sub { margin: 8px 0 0; color: var(--text-dim); font-size: 13px; }
+
+.card {
+  background: var(--panel-strong);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+.card__section + .card__section { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+.card__title { margin: 0 0 14px; font-size: 15px; font-weight: 600; color: var(--text-dim); }
+.card__foot { margin-top: 24px; display: flex; align-items: center; justify-content: flex-end; gap: 16px; }
+
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > span { font-size: 12px; color: var(--text-dim); }
+.field input, .field select {
+  height: 40px;
+  padding: 0 12px;
+  color: var(--text);
+  background: var(--field-bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); }
+/* 下拉弹层由系统绘制，不继承半透明的 --field-bg，要单独给不透明底色 */
+.field select option { background: var(--panel-strong); color: var(--text); }
+.field--check { flex-direction: row; align-items: center; gap: 10px; }
+.field--check > span { font-size: 13px; color: var(--text); order: -1; }
+.field input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 18px; height: 18px; padding: 0; margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--field-bg);
+  cursor: pointer;
+}
+.field input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.field input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute; left: 5px; top: 1px;
+  width: 5px; height: 10px;
+  border: solid #fff; border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Chrome 自动填充会把输入框刷成淡蓝/淡黄底，强制回暗色主题配色 */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text, #eef1f7);
+  -webkit-box-shadow: 0 0 0 1000px #20232a inset;
+  caret-color: var(--text, #eef1f7);
+  transition: background-color 9999s ease-out;
+}
+
+.btn {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--accent); }
+.btn--primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.btn--primary:hover { filter: brightness(1.08); }
+.btn--ghost { margin-top: 14px; }
+
+/* ---------- 提示弹窗（安装页专用；类名避开首页/后台的 .modal） ---------- */
+.install-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, .55);
+}
+.install-dialog__box {
+  --tone: var(--accent);
+  width: min(400px, 100%);
+  padding: 22px 24px;
+  background: var(--panel-strong);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .4);
+  animation: dialog-in .18s ease-out;
+}
+.install-dialog__box:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.install-dialog__box.is-ok { --tone: var(--ok); }
+.install-dialog__box.is-err { --tone: var(--err); }
+.install-dialog__title { margin: 0 0 10px; font-size: 15px; color: var(--tone); }
+.install-dialog__title::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--tone);
+  vertical-align: 2px;
+}
+.install-dialog__text { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text); word-break: break-word; }
+.install-dialog__actions { display: flex; justify-content: flex-end; margin-top: 20px; }
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(8px) scale(.98); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .install-dialog__box { animation: none; }
+}
+
+/* ---------- 登录 / 注册 ---------- */
+.tabs { display: flex; gap: 6px; margin-bottom: 20px; }
+.tab {
+  flex: 1;
+  height: 38px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text-dim);
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.tab.is-active { color: var(--text); border-color: var(--accent); background: rgba(79, 140, 255, .12); }
+.pane + .pane { margin-top: 18px; }
+.field-row { display: flex; gap: 8px; }
+.field-row input { flex: 1; min-width: 0; }
+.captcha { flex: none; width: 110px; height: 40px; border-radius: 8px; background: #f2f4f8; cursor: pointer; }
+.btn--code { height: 40px; padding: 0 12px; font-size: 13px; white-space: nowrap; }
+.btn--code[disabled] { opacity: .55; cursor: not-allowed; }
+
+/* ---------- 首页骨架 ---------- */
+.page-home { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 80px 16px; }
+.home__title { font-size: 40px; letter-spacing: 4px; margin: 0; }
+.home__hint { color: var(--text-dim); font-size: 14px; }
+.home__links { display: flex; gap: 12px; margin-top: 8px; }
+
+@media (max-width: 560px) {
+  .grid { grid-template-columns: 1fr; }
+  .card__foot { flex-direction: column-reverse; align-items: stretch; }
+  .card__foot .btn { width: 100%; }
+}

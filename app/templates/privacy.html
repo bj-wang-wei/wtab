@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}隐私政策 - {{ meta.title or app_name }}{% endblock %}
+{% block body_class %}page-plain{% endblock %}
+{% block body %}
+<main class="wrap">
+  <section class="card doc">
+    <h1>隐私政策</h1>
+    {% if content %}
+    <div class="doc-body">{{ content | safe }}</div>
+    {% else %}
+    <p class="muted">管理员还没有填写隐私政策内容。</p>
+    {% endif %}
+    <p class="muted"><a href="/">返回首页</a></p>
+  </section>
+</main>
+{% endblock %}

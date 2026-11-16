@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}笔记 - {{ app_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ static_prefix }}/app/notes.css">{% endblock %}
+{% block body_class %}notes-page{% endblock %}
+{% block body %}
+<header class="notes-top">
+  <a class="back" href="/">← 返回书签</a>
+  <h1>笔记</h1>
+  <button type="button" class="btn" id="noteNew" hidden>新建笔记</button>
+</header>
+
+<main class="notes-wrap">
+  <div class="notes-hint" id="noteHint" hidden>登录后即可使用笔记。</div>
+  <div class="note-list" id="noteList"></div>
+</main>
+
+<div class="modal" id="noteEditor" hidden>
+  <div class="modal-box">
+    <label>标题<input id="noteTitle" placeholder="标题"></label>
+    <label>内容<textarea id="noteText" rows="12" placeholder="记点什么…"></textarea></label>
+    <div class="modal-actions">
+      <button type="button" class="ghost-btn" id="noteCancel">取消</button>
+      <button type="button" class="btn" id="noteSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+{% endblock %}
+{% block scripts %}
+<script>window.WTAB = {loggedIn: {{ 'true' if user else 'false' }}};</script>
+<script src="{{ static_prefix }}/app/notes.js"></script>
+{% endblock %}

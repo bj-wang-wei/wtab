@@ -1,0 +1,16 @@
+* text=auto eol=lf
+
+# Windows 上 clone 后 shell 脚本必须保持 LF，否则容器入口会报 : not found
+*.sh text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.gif binary
+*.woff binary
+*.woff2 binary

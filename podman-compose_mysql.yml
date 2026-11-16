@@ -1,0 +1,39 @@
+services:
+  wtab:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: wtab:latest
+    container_name: wtab
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: mysql+pymysql://wtab:wtab@mysql:3306/wtab?charset=utf8mb4
+      SECRET_KEY: change-me-in-production
+    volumes:
+      # 每种数据库用独立的 data 目录：共用一个会继承别的库留下的 installed.lock，跳过安装向导
+      - ./data/mysql:/app/data
+      - ./uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wtab
+      MYSQL_USER: wtab
+      MYSQL_PASSWORD: wtab
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mysql-data:

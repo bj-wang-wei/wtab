@@ -1,0 +1,37 @@
+services:
+  wtab:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: wtab:latest
+    container_name: wtab
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://wtab:wtab@postgres:5432/wtab
+      SECRET_KEY: change-me-in-production
+    volumes:
+      # 每种数据库用独立的 data 目录：共用一个会继承别的库留下的 installed.lock，跳过安装向导
+      - ./data/postgresql:/app/data
+      - ./uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: wtab
+      POSTGRES_USER: wtab
+      POSTGRES_PASSWORD: wtab
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wtab -d wtab"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pg-data:

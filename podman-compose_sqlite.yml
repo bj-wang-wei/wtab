@@ -1,0 +1,16 @@
+services:
+  wtab:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: wtab:latest
+    container_name: wtab
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: sqlite:////app/data/wtab.db
+      SECRET_KEY: change-me-in-production
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    restart: unless-stopped

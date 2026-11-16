@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+{% block title %}{{ meta.title or app_name }}{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ static_prefix }}/app/home.css">
+{% endblock %}
+{% block body_class %}home{% endblock %}
+
+{% block body %}
+<div class="bg" id="bg"></div>
+<div class="wrap">
+  <header class="top">
+    <div class="clock" id="clock">
+      <div class="clock-time" id="clockTime">--:--</div>
+      <div class="clock-date" id="clockDate"></div>
+    </div>
+    <div class="top-actions">
+      {% if user %}
+        <button type="button" class="icon-btn" id="btnAdd" title="添加标签">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        </button>
+        <button type="button" class="icon-btn" id="btnFolder" title="新文件夹">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6h6l2 2h10v10H3z"/><path d="M12 11v5"/><path d="M9.5 13.5h5"/></svg>
+        </button>
+        {% if not guest_edit %}
+        <button type="button" class="icon-btn" id="btnLogout" title="退出登录" aria-label="退出登录">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h9"/></svg>
+        </button>
+        {% endif %}
+      {% else %}
+        <button type="button" class="icon-btn" id="loginBtn" title="登录" aria-label="登录">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </button>
+      {% endif %}
+      {% if guest_edit %}
+        <button type="button" class="icon-btn" id="guestCancel" title="取消" aria-label="取消">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+        <button type="button" class="icon-btn" id="guestSave" title="保存" aria-label="保存">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </button>
+      {% endif %}
+    </div>
+  </header>
+
+  <form class="search" id="searchForm" autocomplete="off">
+    <div class="engines-wrap">
+      <button type="button" class="engine-pick" id="enginePick"></button>
+      <div class="engines-menu" id="engines" hidden></div>
+    </div>
+    <input id="q" name="q" placeholder="搜索或输入网址"{% if config.openType.autofocus %} autofocus{% endif %}>
+    <button class="go" type="submit">搜索</button>
+    <div class="suggest" id="suggest" hidden></div>
+  </form>
+
+  <aside class="side" id="side">
+    <div class="side-top">
+      {% if user %}
+      <button type="button" class="side-user" id="sideUser" title="{{ user.mail }}">
+        {% if user.avatar %}<img class="side-avatar" src="{{ user.avatar }}" alt="{{ user.nickname or user.mail }}">
+        {% else %}<span class="side-avatar side-avatar-letter">{{ (user.nickname or user.mail)[:1] | upper }}</span>{% endif %}
+      </button>
+      {% else %}
+      <button type="button" class="side-user" id="sideLogin" title="登录">
+        <span class="side-avatar side-avatar-letter">?</span>
+      </button>
+      {% endif %}
+    </div>
+    <div class="side-list" id="sideList"></div>
+    <div class="side-bottom">
+      <button type="button" class="side-add" id="sideAdd" title="新建分类">＋</button>
+      <button type="button" class="side-gear" id="sideGear" title="设置">⚙</button>
+    </div>
+  </aside>
+
+  <div class="pop" id="groupPop" hidden>
+    <div class="pop-title" id="popGroupTitle">新建分类</div>
+    <div class="pop-icons" id="groupIcons"></div>
+    <input id="groupName" maxlength="12" placeholder="分类名称" autocomplete="off">
+    <div class="pop-actions">
+      <button type="button" class="ghost-btn" id="groupCancel">取消</button>
+      <button type="button" class="btn" id="groupCreate">创建</button>
+    </div>
+  </div>
+  <div class="pop" id="groupMorePop" hidden>
+    <div class="pop-title">更多图标</div>
+    <div class="pop-icons" id="groupIconsMore"></div>
+  </div>
+
+  <main class="grid" id="grid"
+        style="--cols:{{ config.theme.maxColumn or 14 }};--gap:{{ config.theme.colsGap or 35 }}px;--icon:{{ config.theme.iconWidth or 80 }}px;--radius:{{ config.theme.iconRadius or 10 }}px;"></main>
+  <div class="empty" id="empty" hidden>这一页还没有书签，点右上角「添加标签」</div>
+</div>
+
+{% if not user and (meta.copyright or meta.recordNumber or meta.beianMps or meta.privacy) %}
+<div class="site-foot{% if meta.mobileRecordNumber == '1' %} no-beian-mobile{% endif %}">
+  {% if meta.copyright %}<span class="foot-left">{{ meta.copyright }}</span>{% endif %}
+  <span class="foot-right">
+    {% if meta.privacy %}<a class="beian" href="/privacy" target="_blank" rel="noopener">隐私政策</a>{% endif %}
+    {% if meta.recordNumber and meta.loginCloseRecordNumber != '1' %}<a class="beian" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener"><span class="lab">ICP备案</span>{{ meta.recordNumber }}</a>{% endif %}
+    {% if meta.beianMps and meta.loginCloseRecordNumber != '1' %}<a class="beian" href="https://beian.mps.gov.cn/" target="_blank" rel="noopener"><span class="lab">公安备案</span>{{ meta.beianMps }}</a>{% endif %}
+  </span>
+</div>
+{% endif %}
+
+<footer class="tabbar" id="tabbar" hidden></footer>
+
+
+<div class="modal" id="editor" hidden>
+  <form class="modal-box" id="editorForm">
+    <h3 id="editorTitle">添加书签</h3>
+    <label>名称<input name="name" required></label>
+    <label>地址<input name="url" required placeholder="https:// 或 /noteApp"></label>
+    <label>图标
+      <span class="icon-row">
+        <span class="icon-prev" id="editorPrev"><img id="editorPrevImg" alt="" hidden><span id="editorPrevText">首字</span></span>
+        <input name="src" placeholder="图标地址，可上传">
+        <button type="button" class="ghost-btn" id="editorUpload">上传</button>
+        <input type="file" id="editorFile" accept="image/*" hidden>
+      </span>
+    </label>
+    <label>布局
+      <span class="size-row" id="editorSize">
+        <button type="button" class="size-btn on" data-size="1x1">1×1</button>
+        <button type="button" class="size-btn" data-size="1x2">1×2</button>
+        <button type="button" class="size-btn" data-size="2x1">2×1</button>
+        <button type="button" class="size-btn" data-size="2x2">2×2</button>
+        <button type="button" class="size-btn" data-size="2x4">2×4</button>
+        <input type="hidden" name="size" value="1x1">
+      </span>
+    </label>
+    <label>底色
+      <span class="color-field">
+        <input type="hidden" name="bgColor">
+        <input type="color" class="color-input" id="editorColor" value="#4f8cff" title="自定义颜色">
+        <span class="color-hex" id="editorHex">未设置</span>
+        <button type="button" class="ghost-btn" id="editorNoBg" title="不设底色">无</button>
+      </span>
+    </label>
+    <span class="palette" id="editorPalette"></span>
+    <input type="hidden" name="pageGroup">
+    <div class="modal-actions">
+      <button type="button" class="ghost-btn" id="editorCancel">取消</button>
+      <button type="submit" class="btn">保存</button>
+    </div>
+  </form>
+</div>
+
+<div class="modal" id="drawer" hidden>
+  <div class="modal-box settings-box">
+    <div class="settings-head">
+      <h3>设置</h3>
+      <button type="button" class="set-x" id="setX" aria-label="关闭">×</button>
+    </div>
+
+    <div class="settings-body">
+      <nav class="set-tabs" id="setTabs" role="tablist">
+        <button type="button" class="set-tab on" data-tab="account" role="tab">账号设置</button>
+        <button type="button" class="set-tab" data-tab="appearance" role="tab">外观设置</button>
+        <button type="button" class="set-tab" data-tab="wallpaper" role="tab">壁纸设置</button>
+        <button type="button" class="set-tab" data-tab="admin" role="tab">管理员控制区</button>
+        <button type="button" class="set-tab" data-tab="about" role="tab">关于我们</button>
+      </nav>
+
+      <div class="set-panes">
+        <section class="set-pane on" data-pane="account">
+          <div style="display:flex;gap:12px;margin-bottom:8px;">
+            <div style="flex:1">
+              <label style="display:block;font-size:12px;opacity:0.7;margin-bottom:4px;">当前邮箱</label>
+              <input id="accMail" value="{{ user.mail or '' }}" readonly style="width:100%;box-sizing:border-box;">
+            </div>
+            <div style="flex:1">
+              <label style="display:block;font-size:12px;opacity:0.7;margin-bottom:4px;">昵称</label>
+              <input id="accNick" maxlength="30" placeholder="未设置" value="{{ user.nickname or '' }}" style="width:100%;box-sizing:border-box;">
+            </div>
+          </div>
+          <label style="display:flex;gap:20px;align-items:flex-start;flex-direction:row !important;justify-content:center;">
+            <div style="flex:none;text-align:center;">
+              <label>头像
+                <div class="acc-avatar" id="accAvatarPick" title="点击更换">
+                  <span class="acc-avatar-letter">{{ ((user and (user.nickname or user.mail)) or '?')[:1] | upper }}</span>
+                  <img id="accAvatarPreview" src="{{ (user.avatar or '') }}" alt="头像">
+                </div>
+              </label>
+              <div style="margin-top:28px;">
+                <input type="file" accept="image/*" id="accAvatarUpload" style="display:none;">
+                <button type="button" class="ghost-btn" id="accAvatarUploadBtn">选择图片</button>
+              </div>
+            </div>
+            <div style="flex:1;min-width:0;text-align:center;">
+              <label>预设头像
+                <div class="avatar-presets" id="avatarPresets"></div>
+              </label>
+            </div>
+          </label>
+          <h3 class="sub">修改邮箱</h3>
+          <label>新邮箱<input id="accNewMail" type="email" autocomplete="off" placeholder="new@example.com"></label>
+          <label>验证码
+            <span class="inline-field">
+              <input id="accCode" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="邮件验证码">
+              <button type="button" class="ghost-btn" id="accCodeBtn">获取验证码</button>
+            </span>
+          </label>
+          <div class="pane-actions"><button type="button" class="btn" id="accMailSave">修改邮箱</button></div>
+          <h3 class="sub">修改密码</h3>
+          <label>原密码<input id="accOldPwd" type="password" autocomplete="off" placeholder="原密码"></label>
+          <label>新密码<input id="accNewPwd" type="password" autocomplete="off" placeholder="新密码（至少6位）"></label>
+          <label>确认密码<input id="accConfirmPwd" type="password" autocomplete="off" placeholder="确认新密码"></label>
+          <div class="pane-actions"><button type="button" class="btn" id="accPwdSave">修改密码</button></div>
+          <h3 class="sub">账号操作</h3>
+          <div class="pane-actions"><button type="button" class="ghost-btn danger" id="accLogout">退出登录</button></div>
+        </section>
+
+        <section class="set-pane" data-pane="appearance" hidden>
+          <label><span class="range-head">图标大小 <b id="setIconVal"></b></span><input type="range" id="setIcon" min="60" max="80" step="2"></label>
+          <label><span class="range-head">图标圆角 <b id="setRadiusVal"></b></span><input type="range" id="setRadius" min="0" max="30" step="1"></label>
+          <label><span class="range-head">图标列距 <b id="setGapVal"></b></span><input type="range" id="setGap" min="0" max="80" step="5"></label>
+          <label><span class="range-head">每行个数 <b id="setColsVal"></b></span><input type="range" id="setCols" min="4" max="20"></label>
+          <label class="check"><input type="checkbox" id="setTitle"> 显示名称</label>
+          <label class="check"><input type="checkbox" id="setPageGroup"> 开启分组页</label>
+          <label class="check"><input type="checkbox" id="setTabbar"> 显示底部导航</label>
+          <label class="check"><input type="checkbox" id="setTime"> 显示时钟</label>
+          <select id="setColorScheme">
+            <option value="auto">跟随系统</option>
+            <option value="dark">暗色主题</option>
+            <option value="light">亮色主题</option>
+          </select>
+        </section>
+
+        <section class="set-pane" data-pane="wallpaper" hidden>
+          <div class="bg-preview" id="setBgPrev" hidden></div>
+          <input id="setBg" type="hidden" value="">
+          <div class="inline-field" style="margin-top:10px;">
+            <button type="button" class="ghost-btn" id="setBgPick">壁纸库</button>
+            <input type="file" accept="image/*,video/*" id="setBgUpload" hidden>
+            <button type="button" class="ghost-btn" id="setBgUploadBtn">上传壁纸</button>
+          </div>
+          <label style="margin-top:12px;"><span class="range-head">背景模糊值 <b id="setBgBlurVal"></b></span><input type="range" id="setBgBlur" min="0" max="30"></label>
+          <label><span class="range-head">遮罩透明度 <b id="setMaskVal"></b></span><input type="range" id="setMask" min="0" max="100"></label>
+        </section>
+
+        <section class="set-pane" data-pane="admin" hidden>
+          {% if user and user.manager == 1 %}
+          <div class="pane-actions"><button type="button" class="ghost-btn" id="adminEnter">进入管理后台</button></div>
+          <div class="pane-actions" style="margin-top:10px;"><button type="button" class="ghost-btn" id="globalCfgBtn">设置全局默认主页</button></div>
+          {% endif %}
+        </section>
+
+        <section class="set-pane" data-pane="about" hidden>
+          <div class="about-card">
+            <img class="about-logo" id="aboutLogo" src="{{ logo }}" alt="{{ appName }}">
+            <div class="about-name" id="aboutName">{{ appName }}</div>
+            <div class="about-ver" id="aboutVer">版本 {{ appVersion or app_version }}</div>
+            <p class="about-desc" id="aboutDesc">{{ appDesc }}</p>
+            <div class="about-links" id="aboutLinks"></div>
+            <div class="about-contact" id="aboutContact" hidden>
+              <div class="about-contact-row">
+                <div class="about-contact-item" id="aboutEmail" hidden><span class="lab">联系邮箱</span><span class="colon">：</span><a id="aboutEmailLink"></a></div>
+                <div class="about-contact-item" id="aboutQq" hidden><span class="lab">QQ 群</span><span class="colon">：</span><a id="aboutQqLink" target="_blank" rel="noopener"></a></div>
+              </div>
+              <div class="about-divider"></div>
+              <div class="about-contact-item about-contact-custom" id="aboutCustom" hidden><div id="aboutCustomHtml"></div></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <div class="settings-foot">
+      <button type="button" class="ghost-btn" id="setReset">恢复默认值</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="renamePop" hidden>
+  <div class="modal-box">
+    <h3>修改名称</h3>
+    <input type="text" id="renameInput" maxlength="30" autocomplete="off">
+    <div class="modal-actions">
+      <button type="button" class="ghost-btn" id="renameNo">取消</button>
+      <button type="button" class="btn" id="renameYes">确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="confirm" hidden>
+  <div class="modal-box">
+    <h3 id="confirmText"></h3>
+    <div class="modal-actions">
+      <button type="button" class="ghost-btn" id="confirmNo">取消</button>
+      <button type="button" class="btn" id="confirmYes">确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="notice" hidden>
+  <div class="modal-box">
+    <h3 id="noticeTitle">公告</h3>
+    <div class="notice-body" id="noticeBody"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="noticeOk">知道了</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="wall" hidden>
+  <div class="modal-box wide">
+    <h3>选择壁纸</h3>
+    <div class="wall-folders" id="wallFolders"></div>
+    <div class="wall-grid" id="wallGrid"></div>
+    <div class="wall-more"><button type="button" class="ghost-btn" id="wallMore" hidden>加载更多</button></div>
+    <div class="modal-actions">
+      <button type="button" class="ghost-btn" id="wallRandom">随机一张</button>
+      <button type="button" class="ghost-btn" id="wallCancel">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="login" hidden>
+  <div class="modal-box">
+    <div class="auth-tabs" role="tablist">
+      <div class="auth-tab on" role="tab" data-view="login" aria-selected="true">登录</div>
+      {% if meta.user_register != '1' %}<div class="auth-tab" role="tab" data-view="register" aria-selected="false">注册</div>{% endif %}
+      <div class="auth-tab" role="tab" data-view="forget" aria-selected="false">找回密码</div>
+    </div>
+
+    <form class="auth-view" data-view="login" id="loginForm" autocomplete="off">
+      <label>邮箱<input name="mail" type="email" autocomplete="off" required></label>
+      <label>密码<input name="password" type="password" autocomplete="new-password" required></label>
+      <label>验证码<span class="code-row"><input name="code" maxlength="4" autocomplete="off" placeholder="请输入右侧字符" required><img class="captcha" id="captchaImg" src="/captcha" alt="验证码" title="点击刷新"></span></label>
+      <p class="login-msg" id="loginMsg"></p>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn auth-cancel">取消</button>
+        <button type="submit" class="btn">登录</button>
+      </div>
+    </form>
+
+    <form class="auth-view" data-view="register" id="registerForm" hidden>
+      <label>邮箱<input name="mail" type="email" autocomplete="off" required></label>
+      <label>验证码<span class="code-row"><input name="code" inputmode="numeric" required><button type="button" class="ghost-btn code-btn">获取验证码</button></span></label>
+      <label>密码<input name="password" type="password" autocomplete="new-password" minlength="6" required></label>
+      <p class="login-msg" id="registerMsg"></p>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn auth-cancel">取消</button>
+        <button type="submit" class="btn">注册</button>
+      </div>
+    </form>
+
+    <form class="auth-view" data-view="forget" id="forgetForm" hidden>
+      <label>邮箱<input name="mail" type="email" autocomplete="off" required></label>
+      <label>验证码<span class="code-row"><input name="code" inputmode="numeric" required><button type="button" class="ghost-btn code-btn">获取验证码</button></span></label>
+      <label>新密码<input name="password" type="password" autocomplete="new-password" minlength="6" required></label>
+      <p class="login-msg" id="forgetMsg"></p>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn auth-cancel">取消</button>
+        <button type="submit" class="btn">重置密码</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+<div class="ctx" id="ctx" hidden></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.WTAB = {{ {"links": links, "tabbar": tabbar, "config": config, "engines": engines, "pageGroups": page_groups, "lunar": lunar | default(""), "loggedIn": user is not none, "isAdmin": user is not none and user.manager == 1, "guestEdit": guest_edit | default(false)} | tojson }};
+</script>
+<script src="{{ static_prefix }}/app/home.js"></script>
+{% endblock %}
