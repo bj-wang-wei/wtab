@@ -109,10 +109,10 @@ body.home {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 26px auto 44px;
-  max-width: 860px;
-  padding: 12px 12px 12px 18px;
+  gap: 8px;
+  margin: 20px auto 36px;
+  max-width: 720px;
+  padding: 9px 10px 9px 15px;
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 999px;
@@ -127,8 +127,8 @@ body.home {
 .engine-pick {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   border: 0;
   background: transparent;
@@ -138,34 +138,35 @@ body.home {
 }
 .engine-pick:hover { opacity: 1; background: rgba(255, 255, 255, 0.16); }
 .engine-pick img {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
   display: block;
 }
 .engines-menu {
   position: absolute;
-  top: 42px;
+  /* 跟搜索条缩小的尺寸走：41px 正好落在胶囊下沿外面，不会压住输入框 */
+  top: 41px;
   left: 0;
-  min-width: 160px;
+  min-width: 148px;
   z-index: 10;
   background: rgba(30, 32, 38, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  padding: 4px 0;
+  padding: 3px 0;
   backdrop-filter: blur(10px);
 }
 .engines-menu .engine {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   width: 100%;
   height: auto;
-  padding: 8px 12px;
+  padding: 7px 10px;
   border-radius: 0;
   opacity: 0.75;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--fg, #f2f4f8);
   white-space: nowrap;
   text-align: left;
@@ -179,8 +180,8 @@ body.home {
   background: rgba(79, 140, 255, 0.22);
 }
 .engines-menu .engine img {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
   flex: none;
   font-size: 10px;
@@ -190,6 +191,21 @@ body.home {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* 亮色主题：搜索引擎下拉跟着换浅色，否则白底页面上是块黑 */
+[data-color-scheme="light"] .engines-menu {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+[data-color-scheme="light"] .engines-menu .engine {
+  color: #1f2328;
+}
+[data-color-scheme="light"] .engines-menu .engine:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+[data-color-scheme="light"] .engines-menu .engine.on {
+  background: rgba(79, 140, 255, 0.16);
+}
 .search input {
   flex: 1;
   min-width: 0;
@@ -197,7 +213,7 @@ body.home {
   outline: 0;
   background: transparent;
   color: var(--fg);
-  font-size: 18px;
+  font-size: 16px;
 }
 .search input::placeholder {
   color: rgba(255, 255, 255, 0.6);
@@ -205,11 +221,11 @@ body.home {
 .go {
   border: 0;
   border-radius: 999px;
-  padding: 8px 20px;
+  padding: 7px 16px;
   background: var(--accent, #4f8cff);
   color: #fff;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .suggest {
@@ -346,6 +362,7 @@ body.home {
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  cursor: pointer; /* 点卡片 = 放大打开浮层 */
 }
 #grid .group-box {
   flex: 1;
@@ -376,7 +393,6 @@ body.home {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: move;
   user-select: none;
 }
 .group-inner {
@@ -522,26 +538,32 @@ body.home {
   border-radius: 12px;
   filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.38));
 }
+/* dock 图标块：bgColor 由 JS 写在行内。有图片时这块保持透明（图片自己就是图标，
+   和改动前一模一样）；只有首字母项才需要这层浅色底 */
+#tabbar .tab .tab-ico {
+  width: 60px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  font-style: normal;
+}
+#tabbar .tab .tab-ico:not(.has-img) {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.38));
+}
 /* dock 只显示图标，不显示名称 */
 #tabbar .tab span {
   display: none;
 }
 /* 无图标的项回退为首字母块（与桌面图标 .letter 一致） */
 #tabbar .tab .tab-letter {
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 22px;
   font-weight: 500;
   font-style: normal;
   color: #fff;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
-  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.38));
 }
 
 /* 分隔线 + 垃圾桶（把 dock 图标拖上来即移除） */
@@ -808,6 +830,38 @@ body.home {
   gap: 8px;
   margin-top: 10px;
 }
+/* 亮色主题：新建分类/更多图标浮层（.pop）也要跟着变浅 */
+[data-color-scheme="light"] .pop {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  color: #1f2328;
+}
+[data-color-scheme="light"] .pop .pop-ico,
+[data-color-scheme="light"] .pop .pop-more {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.04);
+}
+[data-color-scheme="light"] .pop .pop-ico:hover,
+[data-color-scheme="light"] .pop .pop-more:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+[data-color-scheme="light"] .pop .pop-ico.on {
+  border-color: rgba(79, 140, 255, 0.55);
+  background: rgba(79, 140, 255, 0.18);
+}
+[data-color-scheme="light"] #groupName {
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.04);
+}
+[data-color-scheme="light"] .pop .ghost-btn {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.04);
+  color: #1f2328;
+}
+[data-color-scheme="light"] .pop .ghost-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
 
 
 .modal {
@@ -816,7 +870,7 @@ body.home {
   display: grid;
   place-items: center;
   background: rgba(0, 0, 0, 0.55);
-  z-index: 9;
+  z-index: 40; /* 必须高于搜索框(20)与弹层(30)，否则遮盖不住（右键菜单是 50，要从浮层里弹出来） */
 }
 .modal-box {
   width: min(460px, 92vw);
@@ -859,6 +913,159 @@ body.home {
   opacity: 0.85;
   border-top: 1px solid var(--glass-line);
   padding-top: 14px;
+}
+/* 文件夹浮层：玻璃面板，从被点的卡片位置放大展开（位移/缩放由 JS 写 --gv-*） */
+.gv-box {
+  width: min(720px, 92vw);
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  border: 1px solid var(--glass-line);
+  background: var(--glass);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  animation: gv-in 0.24s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes gv-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--gv-dx, 0px), var(--gv-dy, 0px)) scale(var(--gv-s, 0.35));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.gv-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 10px;
+}
+.gv-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 登录后标题能点改名字，给个能点的样子；浏览态不加这个类，光标保持箭头 */
+.gv-title.can-rename {
+  cursor: pointer;
+}
+.gv-title.can-rename:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.gv-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gv-x {
+  border: 1px solid var(--glass-line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  font-size: 18px;
+  line-height: 1;
+}
+.gv-x:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+.gv-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 76px);
+  gap: 12px;
+  justify-content: center;
+  align-content: start;
+  padding: 4px 16px 18px;
+  overflow-y: auto;
+}
+.gv-tile {
+  width: 76px;
+}
+.gv-tile.dragging {
+  opacity: 0.35;
+}
+.gv-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+  transition: background 0.15s, transform 0.15s;
+}
+.gv-link:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-2px);
+}
+/* 图标自己的底色块（等同于桌面图标的 .gicon / .icon-img），有 bgColor 时由 JS 写在行内 */
+.gv-ico {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.gv-link img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+.gv-link .letter {
+  font-size: 18px;
+}
+.gv-name {
+  max-width: 68px;
+  font-size: 11px;
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gv-empty {
+  grid-column: 1 / -1;
+  padding: 26px 0;
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.55;
+}
+[data-color-scheme="light"] .gv-box {
+  /* 跟 .modal-box 一样：亮色主题换浅色面板 + 深色文字，否则字在浅底上看不清 */
+  --glass-line: rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  color: #1f2328;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+}
+[data-color-scheme="light"] .gv-x {
+  background: rgba(0, 0, 0, 0.05);
+}
+[data-color-scheme="light"] .gv-x:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+[data-color-scheme="light"] .gv-ico {
+  background: rgba(0, 0, 0, 0.05);
+}
+[data-color-scheme="light"] .gv-link:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+[data-color-scheme="light"] .gv-link .letter {
+  color: #222;
+  text-shadow: none;
 }
 .eng-editor {
   display: flex;
@@ -1434,7 +1641,8 @@ body.home {
 /* ---------- 图标右键菜单 ---------- */
 .ctx {
   position: fixed;
-  z-index: 30;
+  /* 高于 .modal(40)：文件夹浮层里右键弹出的菜单不能被浮层压住，而菜单本身只在右键时出现 */
+  z-index: 50;
   min-width: 176px;
   padding: 6px;
   border-radius: 12px;
@@ -1547,6 +1755,41 @@ body.home {
 .ctx-item:hover > .ctx-sub {
   display: block;
 }
+/* 亮色主题：右键菜单跟着换浅色面板，否则亮色页面里是一块死黑 */
+[data-color-scheme="light"] .ctx {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.18);
+  color: #1f2328;
+}
+[data-color-scheme="light"] .ctx-sub {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.18);
+}
+/* 只给可点的行加 hover 底色：布局行原本就是透明的 */
+[data-color-scheme="light"] .ctx-item:not(.ctx-layout):hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+[data-color-scheme="light"] .ctx-item.on {
+  color: #2f6fe4;
+}
+[data-color-scheme="light"] .ctx-item.danger {
+  color: #d33;
+}
+[data-color-scheme="light"] .ctx-sep {
+  background: rgba(0, 0, 0, 0.1);
+}
+[data-color-scheme="light"] .ctx-size {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+[data-color-scheme="light"] .ctx-size:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+[data-color-scheme="light"] .ctx-size.on {
+  border-color: rgba(79, 140, 255, 0.6);
+  background: rgba(79, 140, 255, 0.16);
+}
 
 /* 右侧分类边栏 */
 /* 左侧分类导航条：最上头像，中间分类（图标+文字），最下设置 */
@@ -1640,6 +1883,45 @@ body.home {
   position: relative;
   width: 100%;
 }
+/* 拖动排序：被拖行变淡，落点用一条插入线标出（顶边 = 插到这行前面，底边 = 后面） */
+.side-item[draggable="true"] .side-name {
+  cursor: grab;
+}
+.side-item.dragging {
+  opacity: 0.4;
+}
+.side-item.dragging .side-name {
+  cursor: grabbing;
+}
+.side-item::before,
+.side-item::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  height: 2px;
+  border-radius: 2px;
+  background: #7dabff;
+  box-shadow: 0 0 6px rgba(79, 140, 255, 0.8);
+  opacity: 0;
+  pointer-events: none;
+}
+.side-item::before {
+  top: -3px;
+}
+.side-item::after {
+  bottom: -3px;
+}
+.side-item.over-top::before,
+.side-item.over-bot::after {
+  opacity: 1;
+}
+/* 亮色主题下侧栏更亮，换成更深一点的蓝、去掉发光 */
+[data-color-scheme="light"] .side-item::before,
+[data-color-scheme="light"] .side-item::after {
+  background: #2f6fe4;
+  box-shadow: none;
+}
 .side-item.on .side-name {
   background: rgba(79, 140, 255, 0.28);
 }
@@ -1686,6 +1968,9 @@ body.home {
 }
 .side-item:hover .side-ops {
   display: flex;
+}
+.side-item.dragging .side-ops {
+  display: none;
 }
 .side-op {
   padding: 2px 5px;

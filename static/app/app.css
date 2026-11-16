@@ -28,24 +28,6 @@
   --radius: 14px;
 }
 
-/* 没有显式指定主题的页面（安装向导）跟随系统；数值与上面亮色一套相同，改一处要同步另一处 */
-@media (prefers-color-scheme: light) {
-  :root:not([data-color-scheme]) {
-    color-scheme: light;
-    --bg: #f5f5f5;
-    --panel: rgba(0, 0, 0, .04);
-    --panel-strong: #eaeaea;
-    --line: rgba(0, 0, 0, .1);
-    --text: #222;
-    --text-dim: #666;
-    --accent: #4f8cff;
-    --ok: #3ecf8e;
-    --err: #e53935;
-    --field-bg: #fff;
-    --radius: 14px;
-  }
-}
-
 * { box-sizing: border-box; }
 
 /* hidden 属性必须能压过组件自身的 display（.modal/.drawer/.popup 等都是 display:grid），
@@ -126,7 +108,7 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
   -webkit-text-fill-color: var(--text, #eef1f7);
-  -webkit-box-shadow: 0 0 0 1000px #20232a inset;
+  -webkit-box-shadow: 0 0 0 1000px var(--panel-strong) inset;
   caret-color: var(--text, #eef1f7);
   transition: background-color 9999s ease-out;
 }

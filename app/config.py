@@ -18,9 +18,9 @@ class Settings(BaseSettings):
 
     app_name: str = "wTab书签"
     # 唯一版本号来源：站点设置里的 appVersion 也从这里取
-    app_version: str = "1.0.0"
+    app_version: str = "1.2.2"
     # 兼容原项目常量 app_version_code
-    app_version_code: int = 100
+    app_version_code: int = 122
 
     # 监听地址，可写在 .env 里；命令行 --host/--port 优先
     host: str = "0.0.0.0"

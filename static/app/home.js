@@ -211,13 +211,25 @@
     normalizeSort();
   }
 
-  // 卡片尺寸按「先横向再纵向」长大：2x2 → 2x3 → 3x3 → 3x4 → 4x4 → 4x5…
+  // 卡片每行能放几个：设置里的「每行个数」封顶，同时不能超过网格 auto-fill 之后的真实列数，
+  // 否则卡片会横向撑出网格
+  function maxCardCols() {
+    const grid = $("grid");
+    const set = Number(theme.maxColumn) || 14;
+    const tracks = grid
+      ? (getComputedStyle(grid).gridTemplateColumns || "").split(" ").filter(Boolean).length
+      : 0;
+    return Math.max(2, Math.min(tracks || set, set));
+  }
+
+  // 卡片优先保持 2 行：先加列，列数到上限还装不下才加行（2x2 → 2x3 … 2x14 → 3x14 …）
   function fitSize(size, need) {
+    const lim = maxCardCols();
     let [r, c] = (size || "2x2").split("x").map(Number);
     r = Math.max(r || 2, 2);
-    c = Math.max(c || 2, 2);
+    c = Math.min(Math.max(c || 2, 2), lim);
     while (r * c < need) {
-      if (c <= r) c++;
+      if (c < lim) c++;
       else r++;
     }
     return r + "x" + c;
@@ -331,7 +343,7 @@
     card.className = "group-card";
     card.dataset.id = item.id;
     const kids = childrenOf(item.id).sort((a, b) => (a.sort || 0) - (b.sort || 0));
-    // 尺寸至少 2x2；子项装不下时按 2x2→2x3→3x3→3x4… 自动长大（渲染时也算一遍，
+    // 尺寸至少 2x2；子项装不下时按 2x2→2x3…→2x14→3x14 自动长大（渲染时也算一遍，
     // 这样历史数据里尺寸偏小的文件夹也会被撑开）
     const [rows, cols] = fitSize(item.size, kids.length).split("x").map(Number);
     card.style.setProperty("--spanr", rows);
@@ -362,6 +374,7 @@
           s.textContent = (k.name || "?").trim().charAt(0);
           tile.appendChild(s);
         }
+        if (k.bgColor) tile.style.background = k.bgColor; // 拖进文件夹后不能把桌面图标的底色弄丢
         inner.appendChild(tile);
         if (S.loggedIn) {
           // 卡片里的图标也能拖：拖到网格里的图标上 = 换位/移出，拖到别的卡片 = 换文件夹
@@ -389,6 +402,12 @@
     card.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       openCtx(item, e);
+    });
+
+    // 点卡片空白处或名称 = 放大展开；点里面的小图标仍然直接打开链接
+    card.addEventListener("click", (e) => {
+      if (e.target.closest(".gicon")) return;
+      openGroupView(item, card);
     });
 
     if (S.loggedIn) {
@@ -438,6 +457,131 @@
     g.size = fitSize(g.size, kids.length + 1);
     if (from && from !== g.id) shrinkGroup(links.find((i) => i.id === from));
     render();
+  }
+
+  /* ---------- 文件夹浮层：点卡片从卡片位置放大展开，里面直接改图标 ---------- */
+  let gvGroup = null; // 当前展开的文件夹
+  let gvDrag = null; // 浮层内正在拖动的图标 id（与网格的 dragId 分开，别触发外面那套落点逻辑）
+
+  function openGroupView(item, card) {
+    gvGroup = item;
+    gvDrag = null;
+    $("groupView").hidden = false;
+    renderGroupView();
+    // 展开起点按卡片与面板的中心差算，看起来就是这张卡片变大的。
+    // 用 offsetWidth（不受动画 transform 影响）而不是 rect：面板刚显示时动画已经把 rect 缩放了。
+    const box = $("groupView").querySelector(".gv-box");
+    const c = card.getBoundingClientRect();
+    box.style.setProperty("--gv-dx", Math.round(c.left + c.width / 2 - innerWidth / 2) + "px");
+    box.style.setProperty("--gv-dy", Math.round(c.top + c.height / 2 - innerHeight / 2) + "px");
+    box.style.setProperty("--gv-s", Math.max(0.15, Math.min(1, c.width / (box.offsetWidth || 1))).toFixed(2));
+    box.style.animation = "none"; // 连点不同文件夹时让动画重放
+    void box.offsetWidth;
+    box.style.animation = "";
+  }
+
+  function closeGroupView() {
+    gvGroup = null;
+    gvDrag = null;
+    $("groupView").hidden = true;
+  }
+
+  // 文件夹被删/被解散后浮层要自己关掉，其余情况只重画内容
+  function renderGroupView() {
+    if (!gvGroup) return;
+    if (!links.includes(gvGroup)) return closeGroupView();
+    $("gvTitle").textContent = gvGroup.name || "文件夹";
+    $("gvTitle").title = S.loggedIn ? "点击重命名" : "";
+    $("gvTitle").classList.toggle("can-rename", S.loggedIn);
+    const body = $("gvBody");
+    body.innerHTML = "";
+    const kids = childrenOf(gvGroup.id).sort((a, b) => (a.sort || 0) - (b.sort || 0));
+    if (!kids.length) {
+      const empty = document.createElement("div");
+      empty.className = "gv-empty";
+      empty.textContent = S.loggedIn ? "这个文件夹还是空的，把桌面图标拖进来就行" : "这个文件夹是空的";
+      body.appendChild(empty);
+      return;
+    }
+    kids.forEach((k) => body.appendChild(gvTile(k)));
+  }
+
+  const gvOrder = () =>
+    [...$("gvBody").querySelectorAll(".gv-tile")].map((el) => el.dataset.id);
+
+  function gvTile(item) {
+    const tile = document.createElement("div");
+    tile.className = "gv-tile";
+    tile.dataset.id = item.id;
+    const a = document.createElement("a");
+    a.className = "gv-link";
+    a.href = item.url || "#";
+    a.title = S.loggedIn ? "编辑：" + (item.name || "") : item.name || "";
+    // 图标块单独包一层，底色只染图标，别把下面的名字也染了
+    const ico = document.createElement("span");
+    ico.className = "gv-ico";
+    if (item.bgColor) ico.style.background = item.bgColor;
+    if (item.src) {
+      ico.innerHTML = `<img src="${item.src}" alt="" loading="lazy" onerror="this.remove()">`;
+    } else {
+      const s = document.createElement("span");
+      s.className = "letter";
+      s.textContent = (item.name || "?").trim().charAt(0);
+      ico.appendChild(s);
+    }
+    a.appendChild(ico);
+    const name = document.createElement("span");
+    name.className = "gv-name";
+    name.textContent = item.name || "";
+    a.appendChild(name);
+    tile.appendChild(a);
+    if (!S.loggedIn) return tile; // 未登录只浏览：点图标照常打开链接
+
+    a.target = "_self"; // 登录后点击是编辑，别跳走
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openEditor(item);
+    });
+    // 右键直接弹现成的图标菜单（删除也走它，所以不再需要角标 ✕）
+    tile.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      openCtx(item, e);
+    });
+
+    // 浮层内拖动排序：悬停即让位（与网格同一套 shiftInto），松手按 DOM 顺序写回 sort
+    tile.draggable = true;
+    tile.addEventListener("dragstart", (e) => {
+      gvDrag = item.id;
+      e.dataTransfer.setData("text/plain", item.id);
+      e.dataTransfer.effectAllowed = "move";
+      tile.classList.add("dragging");
+    });
+    tile.addEventListener("dragend", () => {
+      gvDrag = null;
+      tile.classList.remove("dragging");
+      const before = childrenOf(item.pid)
+        .sort((a, b) => (a.sort || 0) - (b.sort || 0))
+        .map((k) => k.id);
+      const ids = gvOrder();
+      if (ids.join() === before.join()) return; // 没换位置就不写库
+      ids.forEach((id, idx) => {
+        const k = links.find((x) => x.id === id);
+        if (k) k.sort = idx * 10;
+      });
+      render();
+      saveLinks();
+    });
+    tile.addEventListener("dragover", (e) => {
+      if (!gvDrag || gvDrag === item.id) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const node = $("gvBody").querySelector(".gv-tile.dragging");
+      if (!node) return;
+      const r = tile.getBoundingClientRect();
+      shiftInto($("gvBody"), node, tile, e.clientX > r.left + r.width / 2, ".gv-tile");
+    });
+    return tile;
   }
 
   // 卡片高度 = 卡片外同等行数的高度（含图标下方名称）；行高实测，免得跟字号跑偏
@@ -638,6 +782,37 @@
 
   const groupIconOf = (g) => ((S.config && S.config.groupIcons) || {})[g] || "folder";
 
+  /* ---------- 侧栏拖动排序（只排分类，「主页」固定第一） ---------- */
+  let sideDrag = null; // 正在拖的分类名
+  let sideAt = null; // 当前落点 { g: 行的分类名（"" 是主页那行）, after }
+  let sideOver = null; // 当前挂着插入线的行
+
+  function endSideDrag() {
+    sideDrag = sideAt = sideOver = null;
+    const list = $("sideList");
+    if (!list) return;
+    list.querySelectorAll(".side-item").forEach((el) => el.classList.remove("dragging", "over-top", "over-bot"));
+  }
+
+  // 松手：摘出被拖分类，按落点插回去（落在主页行 → 排到最前，即紧贴主页下面）
+  function dropSide() {
+    const from = sideDrag;
+    const at = sideAt;
+    endSideDrag();
+    if (!from || !at) return;
+    const rest = (S.pageGroups || []).filter((x) => x !== from);
+    let to = 0;
+    if (at.g) {
+      const i = rest.indexOf(at.g);
+      if (i < 0) return; // 目标分类已经不在了
+      to = i + (at.after ? 1 : 0);
+    }
+    rest.splice(to, 0, from);
+    S.pageGroups = rest;
+    renderSide();
+    saveGroups();
+  }
+
   function renderSide() {
     const list = $("sideList");
     if (!list) return;
@@ -686,6 +861,33 @@
           openCtxGroup2(g, ev);
         });
       }
+      // 拖动排序：只有登录后的分类行能拖；每行都是落点（主页行只能插到它下面）
+      if (g && S.loggedIn) {
+        row.draggable = true;
+        row.addEventListener("dragstart", (e) => {
+          sideDrag = g;
+          e.dataTransfer.setData("text/plain", g);
+          e.dataTransfer.effectAllowed = "move";
+          row.classList.add("dragging");
+        });
+        row.addEventListener("dragend", endSideDrag);
+      }
+      row.addEventListener("dragover", (e) => {
+        if (!sideDrag || sideDrag === g) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        const r = row.getBoundingClientRect();
+        const after = !g || e.clientY > r.top + r.height / 2;
+        sideAt = { g, after };
+        if (sideOver && sideOver !== row) sideOver.classList.remove("over-top", "over-bot");
+        sideOver = row;
+        row.classList.toggle("over-bot", after);
+        row.classList.toggle("over-top", !after);
+      });
+      row.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropSide();
+      });
       list.appendChild(row);
     });
   }
@@ -851,9 +1053,17 @@
       a.title = t.name || "";
       a.dataset.id = String(t.id);
       const letter = (t.name || "?").trim().charAt(0) || "?";
-      a.innerHTML = (t.src
+      // 图标块单独一层：底色只染图标，别把名字那句也染了（跟浮层里的 .gv-ico 一个思路）
+      const ico = document.createElement("i");
+      ico.className = "tab-ico" + (t.src ? " has-img" : "");
+      if (t.bgColor) ico.style.background = t.bgColor;
+      ico.innerHTML = t.src
         ? `<img src="${t.src}" alt="" onerror="this.remove()">`
-        : `<i class="tab-letter">${letter}</i>`) + `<span>${t.name || ""}</span>`;
+        : `<i class="tab-letter">${letter}</i>`;
+      a.appendChild(ico);
+      const label = document.createElement("span");
+      label.textContent = t.name || "";
+      a.appendChild(label);
       a.draggable = true;
       a.addEventListener("dragstart", (e) => {
         dockDrag = { id: String(t.id), node: a };
@@ -925,7 +1135,7 @@
       const maxSort = tabs.length ? Math.max(...tabs.map((t) => t.sort || 0)) : -10;
       tabs.push({
         id: uuid(), pid: null, name: item.name || item.url, url: item.url,
-        src: item.src || "", sort: maxSort + 10,
+        src: item.src || "", bgColor: item.bgColor || "", sort: maxSort + 10,
       });
       const res = await post("/tabbar/update", { tabbar: tabs });
       if (res.code !== 1) return toast(res.msg || "保存失败");
@@ -1749,7 +1959,7 @@
         const next = tabs.length ? Math.max(...tabs.map((t) => t.sort || 0)) + 10 : 0;
         tabs.push({
           id: uuid(), app: 0, pid: null, name: item.name, url: item.url,
-          src: item.src, size: "1x1", sort: next, type: "icon",
+          src: item.src, bgColor: item.bgColor || "", size: "1x1", sort: next, type: "icon",
         });
         const res = await post("/tabbar/update", { tabbar: tabs });
         toast(res.code === 1 ? "已加入 dock 栏" : res.msg || "操作失败");
@@ -1797,6 +2007,7 @@
             links = links.filter((i) => i.id !== item.id && i.pid !== item.id);
             normalizeSort();
             render();
+            renderGroupView(); // 从文件夹浮层里删的，浮层内容也要跟着少一个
             saveLinks();
           }),
         { danger: true, icon: CTX_ICON.trash }
@@ -2003,8 +2214,23 @@
       e.preventDefault();
       upsert(e.target);
       $("editor").hidden = true;
+      renderGroupView(); // 从文件夹浮层里进来改的，浮层内容要跟着变
       if (await saveLinks()) toast("已保存");
     });
+
+    // 文件夹浮层：关闭 ×、点遮罩；标题点一下就能重命名（复用重命名弹窗那条链路）
+    $("gvClose").onclick = closeGroupView;
+    $("groupView").addEventListener("click", (e) => {
+      if (e.target === $("groupView")) closeGroupView();
+    });
+    $("gvTitle").onclick = () => {
+      if (!gvGroup || !S.loggedIn) return;
+      openRenamePop(gvGroup, "修改名称", () => {
+        renderGroupView();
+        render();
+        saveLinks();
+      });
+    };
 
     const closeSettings = () => ($("drawer").hidden = true);
     $("setX").onclick = () => { saveSettings(true); closeSettings(); };
@@ -2327,6 +2553,7 @@
         $("login").hidden = true;
         $("wall").hidden = true;
         $("groupPop").hidden = true;
+        closeGroupView();
         closeCtx();
       }
     });

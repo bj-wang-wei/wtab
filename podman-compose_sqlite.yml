@@ -1,8 +1,5 @@
 services:
   wtab:
-    build:
-      context: .
-      dockerfile: Containerfile
     image: docker.io/bjwangweigmail/wtab:latest
     container_name: wtab
     ports:

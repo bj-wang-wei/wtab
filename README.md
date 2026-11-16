@@ -92,14 +92,27 @@ python -m scripts.start --reload
 三种数据库各一份 compose 文件，按需选一个：
 
 ```bash
-podman compose -f podman-compose_sqlite.yml up -d --build      # 容器内 SQLite（默认）
-podman compose -f podman-compose_mysql.yml up -d --build       # 带 MySQL 8.4
-podman compose -f podman-compose_postgresql.yml up -d --build  # 带 PostgreSQL 16
+podman compose -f podman-compose_sqlite.yml up -d      # 容器内 SQLite（默认）
+podman compose -f podman-compose_mysql.yml up -d       # 带 MySQL 8.4
+podman compose -f podman-compose_postgresql.yml up -d  # 带 PostgreSQL 16
 ```
 
-镜像用 `Containerfile` 构建（`.containerignore` 控制构建上下文）。Windows/macOS 上先 `podman machine init && podman machine start`。
+镜像名是 `docker.io/bjwangweigmail/wtab:latest`，本机没有会自动从 Docker Hub 拉取（也可以先 `podman pull`）。Windows/macOS 上先 `podman machine init && podman machine start`。
 
-compose 里的镜像名是 `docker.io/bjwangweigmail/wtab:latest`：本机没有该镜像时会自动从 Docker Hub 拉取，想用发布的镜像也可以先 `podman pull docker.io/bjwangweigmail/wtab:latest`；`--build` 则改用当前源码本地构建。
+想从当前源码自己构建镜像（`Containerfile`，`.containerignore` 控制构建上下文）：
+
+```bash
+podman build -t docker.io/bjwangweigmail/wtab:latest -f Containerfile .
+```
+
+目标机器连不上 Docker Hub 时，在一台能联网的机器上导出镜像，把 tar 拷过去加载即可（镜像名带完整仓库地址，`load` 之后 compose 用本地镜像，不会再拉取）：
+
+```bash
+podman save -o wtab-1.2.2.tar docker.io/bjwangweigmail/wtab:latest  # 能联网的机器
+podman load -i wtab-1.2.2.tar                                       # 目标机器
+```
+
+`podman-compose_mysql.yml` / `_postgresql.yml` 还需要 `mysql:8.4` / `postgres:16-alpine`，离线环境同样要 `save`/`load`，或改用内网镜像仓库。
 
 首次启动访问 `/install` 走网页安装向导。每种数据库的容器数据放在各自的目录（`data/`、`data/mysql/`、`data/postgresql/`），互不干扰；想重装就删掉对应目录再 `up`。
 
@@ -141,7 +154,7 @@ DATABASE_URL=postgresql+psycopg://user:pass@host/dbname
 | `POST /link/reset` | 重置当前用户书签 |
 | `POST /config/get` | 获取配置 |
 | `POST /config/update` | 保存配置 |
-| `GET /health` | 健康检查（`{"code":1,"data":{"app":"wTab书签","version":"1.0.0"}}`） |
+| `GET /health` | 健康检查（`{"code":1,"data":{"app":"wTab书签","version":"1.2.2"}}`） |
 
 ## 版本与缓存
 
