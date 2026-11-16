@@ -2,6 +2,14 @@
 
 个人书签主页 — mTab 的 Python 复刻版本，用浏览器即可管理你的书签。
 
+## 截图
+
+| 主页 | 登录 |
+| --- | --- |
+| ![主页](docs/screenshots/home.jpg) | ![登录](docs/screenshots/login.jpg) |
+
+![安装向导](docs/screenshots/install.jpg)
+
 ## 功能概览
 
 - **书签管理**：添加 / 编辑 / 删除书签；右键卡片（文件夹）可修改名称、移动至分类、解散或删除。
