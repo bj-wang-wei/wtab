@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.config import settings
 from app.services import settings_store
 
 DEFAULTS: dict[str, str] = {
@@ -21,7 +22,7 @@ DEFAULTS: dict[str, str] = {
     "qqGroup": "",
     "customAbout": "",
     "appName": "wTab书签",
-    "appVersion": "1.0.0",
+    "appVersion": settings.app_version,
     "appDesc": "一个安静的浏览器起始页：书签、分类、壁纸和搜索引擎都放在一屏里。",
     "appLinks": 'GitHub:https://github.com/bj-wang-wei/wtab|运行状态:/health',
     "aboutMe": '''<p style="margin:0 0 4px;">wTab 书签 © 2026 — 开源、轻量、安静。</p>

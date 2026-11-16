@@ -139,7 +139,7 @@ DATABASE_URL=postgresql+psycopg://user:pass@host/dbname
 | `POST /link/reset` | 重置当前用户书签 |
 | `POST /config/get` | 获取配置 |
 | `POST /config/update` | 保存配置 |
-| `GET /health` | 健康检查（`{"code":1,"data":{"app":"Wtab书签","version":"2.4.3"}}`） |
+| `GET /health` | 健康检查（`{"code":1,"data":{"app":"wTab书签","version":"1.0.0"}}`） |
 
 ## 版本与缓存
 

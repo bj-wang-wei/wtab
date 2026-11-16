@@ -17,9 +17,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     app_name: str = "wTab书签"
-    app_version: str = "2.4.3"
+    # 唯一版本号来源：站点设置里的 appVersion 也从这里取
+    app_version: str = "1.0.0"
     # 兼容原项目常量 app_version_code
-    app_version_code: int = 243
+    app_version_code: int = 100
 
     # 监听地址，可写在 .env 里；命令行 --host/--port 优先
     host: str = "0.0.0.0"
