@@ -493,13 +493,14 @@
     $("gvTitle").textContent = gvGroup.name || "文件夹";
     $("gvTitle").title = S.loggedIn ? "点击重命名" : "";
     $("gvTitle").classList.toggle("can-rename", S.loggedIn);
+    $("gvAdd").hidden = !S.loggedIn; // 只有登录后才能在文件夹里加标签
     const body = $("gvBody");
     body.innerHTML = "";
     const kids = childrenOf(gvGroup.id).sort((a, b) => (a.sort || 0) - (b.sort || 0));
     if (!kids.length) {
       const empty = document.createElement("div");
       empty.className = "gv-empty";
-      empty.textContent = S.loggedIn ? "这个文件夹还是空的，把桌面图标拖进来就行" : "这个文件夹是空的";
+      empty.textContent = S.loggedIn ? "这个文件夹还是空的，点右上角的＋添加标签" : "这个文件夹是空的";
       body.appendChild(empty);
       return;
     }
@@ -584,21 +585,17 @@
     return tile;
   }
 
-  // 卡片高度 = 卡片外同等行数的高度（含图标下方名称）；行高实测，免得跟字号跑偏
+  // 卡片高度 = 它跨的 N 行图标总高，跟外面 N 行桌面图标对齐；网格行高随字号/设置变化，按实测算
   function sizeCards() {
     const grid = $("grid");
     const sample = grid.querySelector(".icon");
     const rowH = sample ? sample.getBoundingClientRect().height : 64 + 27.5;
     const gap = parseFloat(getComputedStyle(grid).rowGap) || 0;
     grid.querySelectorAll(".group-card").forEach((card) => {
-      const r = parseInt(card.style.getPropertyValue("--spanr"), 10) || 2;
-      card.style.height = Math.round(rowH * r + gap * (r - 1)) + "px";
-      const box = card.querySelector(".group-box");
-      const inner = card.querySelector(".group-inner");
-      if (!box || !inner) return;
-      // 间距全部交给 CSS 的 space-evenly；这里只清掉旧的横向间距变量
-      card.style.removeProperty("--pad");
-      inner.style.rowGap = "";
+      const rows = parseInt(card.style.getPropertyValue("--spanr"), 10) || 2;
+      // N 行图标高度 + 行间距，普通图标和文件夹卡片共用同一个跨度
+      const span = rowH * rows + gap * (rows - 1);
+      card.style.height = Math.ceil(span) + "px";
     });
   }
 
@@ -1526,7 +1523,7 @@
     $("setBg").value = theme.backgroundImage || "";
     $("setIcon").value = theme.iconWidth || 80;
     $("setRadius").value = theme.iconRadius == null ? 10 : theme.iconRadius;
-    $("setGap").value = theme.colsGap == null ? 35 : theme.colsGap;
+    $("setGap").value = theme.colsGap == null ? 46 : theme.colsGap;
     $("setCols").value = theme.maxColumn || 14;
     $("setBgBlur").value = theme.blur || 0;
     $("setMask").value = theme.maskOpacity == null ? 55 : Math.round(theme.maskOpacity * 100);
@@ -2223,6 +2220,14 @@
     $("groupView").addEventListener("click", (e) => {
       if (e.target === $("groupView")) closeGroupView();
     });
+    // 「＋」= 在这个文件夹里新建标签：openEditor 会把 pid 清空，所以要在它之后写回
+    $("gvAdd").onclick = () => {
+      if (!gvGroup || !S.loggedIn) return;
+      openEditor(null);
+      const f = $("editorForm");
+      f.dataset.pid = gvGroup.id;
+      f.elements.pageGroup.value = gvGroup.pageGroup || activePage;
+    };
     $("gvTitle").onclick = () => {
       if (!gvGroup || !S.loggedIn) return;
       openRenamePop(gvGroup, "修改名称", () => {
@@ -2351,6 +2356,16 @@
                 customHtml.innerHTML = about;
               } else { customEl.hidden = true; }
               $("aboutContact").hidden = !(email || qq || about);
+              // 备案信息（ICP / 公安），有值才显示对应行
+              const icp = (d.recordNumber || "").trim();
+              const mps = (d.beianMps || "").trim();
+              const icpRow = $("aboutIcpRow");
+              const mpsRow = $("aboutMpsRow");
+              if (icp) { $("aboutIcp").textContent = icp; icpRow.hidden = false; }
+              else { icpRow.hidden = true; }
+              if (mps) { $("aboutMps").textContent = mps; mpsRow.hidden = false; }
+              else { mpsRow.hidden = true; }
+              $("aboutBeian").hidden = !(icp || mps);
             }
           } catch {}
         }

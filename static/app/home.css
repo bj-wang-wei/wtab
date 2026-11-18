@@ -287,9 +287,9 @@ body.home {
   /* 列宽永远不小于图标尺寸，否则图标会溢出格子与邻居压叠；
      max-width 再用 --cols 封顶，保留「每行个数」设置的作用。 */
   grid-template-columns: repeat(auto-fill, minmax(var(--icon, 64px), 1fr));
-  column-gap: calc(var(--gap, 35px) / 2);
-  row-gap: calc(var(--gap, 35px) / 2);
-  max-width: calc(var(--cols, 14) * (var(--icon, 64px) + var(--gap, 35px) / 2));
+  column-gap: calc(var(--gap, 46px) / 2);
+  row-gap: calc(var(--gap, 46px) / 2);
+  max-width: calc(var(--cols, 14) * (var(--icon, 64px) + var(--gap, 46px) / 2));
   margin-inline: auto;
   justify-items: center;
 }
@@ -311,8 +311,8 @@ body.home {
 .icon-img {
   /* 1x1 固定 iconWidth×iconWidth；跨格时按 iconWidth 基准等比放大 */
   width: 100%;
-  max-width: calc(var(--spanc, 1) * var(--icon, 64px) + (var(--spanc, 1) - 1) * (var(--gap, 35px) / 2));
-  height: calc(var(--spanr, 1) * var(--icon, 64px) + (var(--spanr, 1) - 1) * (var(--gap, 35px) / 2));
+  max-width: calc(var(--spanc, 1) * var(--icon, 64px) + (var(--spanc, 1) - 1) * (var(--gap, 46px) / 2));
+  height: calc(var(--spanr, 1) * var(--icon, 64px) + (var(--spanr, 1) - 1) * (var(--gap, 46px) / 2));
   flex: none;
   display: flex;
   align-items: center;
@@ -356,7 +356,7 @@ body.home {
   /* #grid 是 justify-items:center，卡片必须自己撑满跨的格子，否则空卡片会缩成一条 */
   justify-self: stretch;
   width: 100%;
-  /* 高度由 JS 按「卡片外同等行数」的实测高度写入（网格行高随字号变化，纯 CSS 算不准） */
+  /* 高度由 JS 写入：名称 + 边框 + 上下留白 + spanr 行图标（见 sizeCards）；网格行高随字号变化，纯 CSS 算不准 */
   align-self: start;
   display: flex;
   flex-direction: column;
@@ -365,11 +365,13 @@ body.home {
   cursor: pointer; /* 点卡片 = 放大打开浮层 */
 }
 #grid .group-box {
+  /* 盒子撑满卡片高度：卡片高度已由 JS 设成它跨的行总高（2 行时 = 两行外部图标高度），
+     flex:1 后圆角底边正好落在这几行底部，不再在卡片底部留一截空白 */
   flex: 1;
   min-height: 0;
   position: relative;
   display: flex;
-  /* 上下内边距 = 外面间距的一半；左右会被图标挤到最小（2px），否则 64px 图标装不下 */
+  /* 四边留白由 .group-inner 的 padding 负责，这里不加内边距 */
   padding: 0;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.08);
@@ -399,20 +401,23 @@ body.home {
   flex: 1;
   min-height: 0;
   display: grid;
-  /* 图标固定 64px；剩余空间用 space-evenly 平分到两侧与图标之间（横竖各自均匀） */
-  gap: 0;
-  grid-template-columns: repeat(var(--spanc, 2), var(--icon, 64px));
-  grid-template-rows: repeat(var(--spanr, 2), var(--icon, 64px));
-  justify-content: space-evenly;
-  align-content: space-evenly;
+  /* 四边留白一致（16 + 1px 边框 = 17），行列间距保持 12：列宽行宽都用 1fr 自适应，
+     图标放不下时才缩（2 列的小文件夹和 4/6 列的大文件夹是同一个呼吸节奏） */
+  gap: 12px;
+  padding: 16px;
+  grid-template-columns: repeat(var(--spanc, 2), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--spanr, 2), minmax(0, 1fr));
   overflow: hidden;
 }
 .group-inner .gicon {
   display: grid;
   place-items: center;
-  /* 与桌面图标块等大 */
-  width: var(--icon, 64px);
-  height: var(--icon, 64px);
+  /* 列宽够就用 --icon 满尺寸，不够就缩到列宽（保持正方形） */
+  width: min(var(--icon, 64px), 100%);
+  height: auto;
+  aspect-ratio: 1;
+  align-self: center;
+  justify-self: center;
   border-radius: var(--radius, 10px);
   overflow: hidden;
   background: rgba(255, 255, 255, 0.06);
@@ -966,6 +971,8 @@ body.home {
   align-items: center;
   gap: 8px;
 }
+/* ＋（添加标签）和 × 共用一套按钮外观 */
+.gv-add,
 .gv-x {
   border: 1px solid var(--glass-line);
   border-radius: 10px;
@@ -977,6 +984,7 @@ body.home {
   font-size: 18px;
   line-height: 1;
 }
+.gv-add:hover,
 .gv-x:hover {
   background: rgba(255, 255, 255, 0.18);
 }
@@ -1051,9 +1059,11 @@ body.home {
   color: #1f2328;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
 }
+[data-color-scheme="light"] .gv-add,
 [data-color-scheme="light"] .gv-x {
   background: rgba(0, 0, 0, 0.05);
 }
+[data-color-scheme="light"] .gv-add:hover,
 [data-color-scheme="light"] .gv-x:hover {
   background: rgba(0, 0, 0, 0.12);
 }
@@ -1509,6 +1519,13 @@ body.home {
 }
 .about-contact-item a:hover {
   text-decoration: underline;
+}
+.about-beian {
+  margin-top: 12px;
+}
+.about-beian .lab {
+  margin-right: 6px;
+  opacity: 0.7;
 }
 .notice-body {
   font-size: 13px;

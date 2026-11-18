@@ -110,6 +110,7 @@
     <div class="gv-head">
       <div class="gv-title" id="gvTitle"></div>
       <div class="gv-tools">
+        <button type="button" class="gv-add" id="gvAdd" aria-label="添加标签" title="添加标签" hidden>＋</button>
         <button type="button" class="gv-x" id="gvClose" aria-label="关闭">×</button>
       </div>
     </div>
@@ -271,6 +272,11 @@
               </div>
               <div class="about-divider"></div>
               <div class="about-contact-item about-contact-custom" id="aboutCustom" hidden><div id="aboutCustomHtml"></div></div>
+            </div>
+            <div class="about-beian" id="aboutBeian" hidden>
+              <div class="about-divider"></div>
+              <div class="about-contact-item" id="aboutIcpRow" hidden><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener"><span class="lab">ICP备案</span><span class="val" id="aboutIcp"></span></a></div>
+              <div class="about-contact-item" id="aboutMpsRow" hidden><a href="https://beian.mps.gov.cn/" target="_blank" rel="noopener"><span class="lab">公安备案</span><span class="val" id="aboutMps"></span></a></div>
             </div>
           </div>
         </section>
