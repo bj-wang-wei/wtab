@@ -378,14 +378,14 @@
 
   async function loadFiles(page) {
     fPage = page || 1;
-    const j = await api('/file/list', { limit: 20, page: fPage, search: { path: $('fSearch').value.trim() } });
+    const j = await api('/file/list', { limit: Number($('fLimit').value), page: fPage, search: { path: $('fSearch').value.trim() } });
     if (!okOf(j)) { msgModal(j.msg || '读取失败'); return; }
     const d = j.data;
     $('fBody').innerHTML = (d.data || []).map((f) => `
       <tr>
         <td><input type="checkbox" data-f-check="${f.id}"></td>
         <td>${f.id}</td>
-        <td>${f.mime_type && f.mime_type.startsWith('image') ? `<img class="ico" src="${esc(f.path)}" alt="">` : ''}</td>
+        <td>${f.mime_type && f.mime_type.startsWith('image') ? `<img class="ico" data-f-view="${esc(f.path)}" title="点击放大" src="${esc(f.path)}" alt="">` : ''}</td>
         <td class="mini">${esc(f.path)}</td><td class="mini">${esc(f.mime_type || '-')}</td>
         <td>${Math.round((f.size || 0) / 1024)} KB</td>
         <td class="mini">${esc((f.user && f.user.mail) || '-')}</td><td class="mini">${esc(f.create_time || '-')}</td>
@@ -394,6 +394,10 @@
     pager({ prev: $('fPrev'), next: $('fNext') }, $('fInfo'), d.current_page, d.last_page, d.total, loadFiles);
     $('fBody').querySelectorAll('[data-f-check]').forEach((b) => (b.onchange = syncFAll));
     syncFAll();
+    $('fBody').querySelectorAll('[data-f-view]').forEach((im) => (im.onclick = () => {
+      modal(`<button class="img-close" id="imgViewClose" aria-label="关闭">✕</button><img class="img-view" src="${esc(im.dataset.fView)}" alt="预览">`);
+      $('imgViewClose').onclick = closeModal;
+    }));
     $('fBody').querySelectorAll('[data-f-del]').forEach((b) => (b.onclick = async () => {
       const id = Number(b.dataset.fDel);
       const path = b.closest('tr').children[3].textContent; // 第 1 列是勾选框，路径在第 4 列
@@ -534,6 +538,7 @@
   });
 
   $('uLimit').onchange = () => loadUsers(1);
+  $('fLimit').onchange = () => loadFiles(1);
   $('uSearch').onclick = () => loadUsers(1);
   $('uNew').onclick = () => editUser({});
   $('eSearchBtn').onclick = () => loadEngines(1);

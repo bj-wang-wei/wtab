@@ -10,6 +10,12 @@
 
 ![安装向导](docs/screenshots/install.jpg)
 
+## 在线演示
+
+- 网址：https://tab.double-u.cn
+- 用户名：demo@double-u.cn
+- 密码：Demo.123,
+
 ## 功能概览
 
 - **书签管理**：添加 / 编辑 / 删除书签；右键卡片（文件夹）可修改名称、移动至分类、解散或删除。
@@ -108,8 +114,8 @@ podman build -t docker.io/bjwangweigmail/wtab:latest -f Containerfile .
 目标机器连不上 Docker Hub 时，在一台能联网的机器上导出镜像，把 tar 拷过去加载即可（镜像名带完整仓库地址，`load` 之后 compose 用本地镜像，不会再拉取）：
 
 ```bash
-podman save -o wtab-1.2.5.tar docker.io/bjwangweigmail/wtab:latest  # 能联网的机器
-podman load -i wtab-1.2.5.tar                                       # 目标机器
+podman save -o wtab-1.2.6.tar docker.io/bjwangweigmail/wtab:latest  # 能联网的机器
+podman load -i wtab-1.2.6.tar                                       # 目标机器
 ```
 
 `podman-compose_mysql.yml` / `_postgresql.yml` 还需要 `mysql:8.4` / `postgres:16-alpine`，离线环境同样要 `save`/`load`，或改用内网镜像仓库。
@@ -154,7 +160,7 @@ DATABASE_URL=postgresql+psycopg://user:pass@host/dbname
 | `POST /link/reset` | 重置当前用户书签 |
 | `POST /config/get` | 获取配置 |
 | `POST /config/update` | 保存配置 |
-| `GET /health` | 健康检查（`{"code":1,"data":{"app":"wTab书签","version":"1.2.5"}}`） |
+| `GET /health` | 健康检查（`{"code":1,"data":{"app":"wTab书签","version":"1.2.6"}}`） |
 
 ## 版本与缓存
 

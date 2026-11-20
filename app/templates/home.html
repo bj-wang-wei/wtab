@@ -170,7 +170,9 @@
         <button type="button" class="set-tab on" data-tab="account" role="tab">账号设置</button>
         <button type="button" class="set-tab" data-tab="appearance" role="tab">外观设置</button>
         <button type="button" class="set-tab" data-tab="wallpaper" role="tab">壁纸设置</button>
+        {% if user and user.manager == 1 %}
         <button type="button" class="set-tab" data-tab="admin" role="tab">管理员控制区</button>
+        {% endif %}
         <button type="button" class="set-tab" data-tab="about" role="tab">关于我们</button>
       </nav>
 

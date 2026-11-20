@@ -800,6 +800,13 @@ body.home {
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
 }
+/* 纯黑在深底上会融进面板、纯白容易被当成「空」：给这两格反向描边，其余色块不变 */
+.palette button[title="#000000"] {
+  border-color: rgba(255, 255, 255, 0.75);
+}
+.palette button[title="#ffffff"] {
+  border-color: rgba(0, 0, 0, 0.65);
+}
 /* 选中的色块：放大 + 白色描边 + 蓝色光圈，一眼看出当前底色 */
 .palette button.on {
   border-color: #fff;

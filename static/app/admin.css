@@ -131,7 +131,7 @@
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 th { color: var(--text-dim); font-weight: 500; font-size: 12px; }
-td img.ico { width: 22px; height: 22px; border-radius: 6px; object-fit: cover; }
+td img.ico { width: 22px; height: 22px; border-radius: 6px; object-fit: cover; cursor: pointer; }
 td img.u-avatar { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; display: block; background: var(--line); }
 .u-avatar-prev { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: var(--line); }
 .e-icon-prev { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: var(--line); display: inline-block; vertical-align: middle; }
@@ -250,6 +250,11 @@ td.ops, span.ops { display: inline-flex; align-items: center; gap: 6px; white-sp
 }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
 .modal-box .warn { color: var(--err); font-size: 12.5px; }
+/* 图片预览专用：img.img-view 是 #modalBox 的直接子元素，用 :has 命中容器，避免影响其它复用 modal 的弹窗 */
+.modal-box:has(> img.img-view) { width: min(90vw, 1100px); padding: 14px; position: relative; }
+.modal-box:has(> img.img-view) > img.img-view { display: block; max-width: 100%; max-height: 78vh; object-fit: contain; margin: 0 auto; border-radius: 8px; }
+.img-close { position: absolute; top: 8px; right: 10px; width: 30px; height: 30px; border: 1px solid var(--line); background: var(--a-inset); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 14px; line-height: 1; }
+.img-close:hover { border-color: #4f8cff; }
 
 @media (max-width: 760px) {
   .admin-shell { flex-direction: column; }

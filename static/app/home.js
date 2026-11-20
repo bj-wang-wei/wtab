@@ -1034,6 +1034,20 @@
     }
     bar.hidden = false;
     bar.innerHTML = "";
+    // dock 内部拖动后按 DOM 顺序写回 sort 并保存：松手落在图标上或图标间空隙都走这里
+    async function persistDockOrder() {
+      const ids = [...bar.querySelectorAll(".tab")].map((x) => x.dataset.id);
+      const all = Array.isArray(S.tabbar) ? S.tabbar : (S.tabbar = []);
+      const tops = ids.map((id) => all.find((x) => String(x.id) === id)).filter(Boolean);
+      if (!tops.length) return render();
+      tops.forEach((x, i) => {
+        x.sort = i * 10;
+      });
+      const res = await post("/tabbar/update", { tabbar: S.tabbar });
+      if (res.code !== 1) toast(res.msg || "保存失败");
+      else toast("顺序已保存");
+      render();
+    }
     tabs.forEach((t) => {
       const a = document.createElement("a");
       a.className = "tab";
@@ -1087,20 +1101,11 @@
       a.addEventListener("drop", async (e) => {
         if (!dockDrag || !dockAt) return;
         e.preventDefault();
+        e.stopPropagation(); // 落在图标上就在这里保存，别冒泡到 bar 再存一次
         dockDrag = null;
         dockAt = null;
         // 以拖放后的 DOM 顺序为准重排 sort，避免 sort 中间值算错
-        const ids = [...bar.querySelectorAll(".tab")].map((x) => x.dataset.id);
-        const all = Array.isArray(S.tabbar) ? S.tabbar : (S.tabbar = []);
-        const tops = ids.map((id) => all.find((x) => String(x.id) === id)).filter(Boolean);
-        if (!tops.length) return render();
-        tops.forEach((x, i) => {
-          x.sort = i * 10;
-        });
-        const res = await post("/tabbar/update", { tabbar: S.tabbar });
-        if (res.code !== 1) toast(res.msg || "保存失败");
-        else toast("顺序已保存");
-        render();
+        await persistDockOrder();
       });
       bar.appendChild(a);
     });
@@ -1112,7 +1117,10 @@
 
     // 把桌面图标拖入 dock 栏（接收 dragId，非 dockDrag）
     bar.addEventListener("dragover", (e) => {
-      if (!dragId || dockDrag) return;
+      // dock 内部拖动也要 preventDefault，否则松手落在图标间空隙时这里不是合法落点、
+      // drop 根本不触发，下面 drop 里的兜底保存就成了死代码（刷新回退的真正原因）。
+      if (dockDrag) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; return; }
+      if (!dragId) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = "move";
       bar.classList.add("drop-in");
@@ -1124,7 +1132,16 @@
       const id = dragId;
       dragId = null;
       dragNode = null;
-      if (!id) return;
+      if (!id) {
+        // dock 内部拖动松手落在图标外的空隙时，落点不会命中某个 <a> 的 drop，
+        // 这里兜底按当前 DOM 顺序保存，否则视觉已重排但没 POST、刷新后回退。
+        if (dockDrag) {
+          dockDrag = null;
+          dockAt = null;
+          await persistDockOrder();
+        }
+        return;
+      }
       const item = links.find((x) => String(x.id) === id);
       if (!item || !item.url || item.type === "component") return;
       const tabs = Array.isArray(S.tabbar) ? S.tabbar : (S.tabbar = []);
@@ -1198,7 +1215,7 @@
   }
 
   /* ---------- 编辑 ---------- */
-  const BG_PALETTE = ["#4f8cff", "#22c55e", "#f59e0b", "#ef4444", "#a855f7", "#06b6d4", "#ec4899", "#84cc16", "#64748b", "#f97316", "#14b8a6", "#eab308"];
+  const BG_PALETTE = ["#4f8cff", "#22c55e", "#f59e0b", "#ef4444", "#a855f7", "#06b6d4", "#ec4899", "#84cc16", "#64748b", "#f97316", "#14b8a6", "#eab308", "#000000", "#ffffff"];
 
   function setEditorBg(v) {
     const f = $("editorForm");
