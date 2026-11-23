@@ -1045,7 +1045,6 @@
       });
       const res = await post("/tabbar/update", { tabbar: S.tabbar });
       if (res.code !== 1) toast(res.msg || "保存失败");
-      else toast("顺序已保存");
       render();
     }
     tabs.forEach((t) => {
@@ -1434,15 +1433,15 @@
     const q = (text || "").trim();
     if (!q) return;
     if (/^(https?:\/\/|\/)/i.test(q)) {
-      window.location.href = q;
+      window.open(q, "_blank");
       return;
     }
     if (/^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(q)) {
-      window.location.href = "https://" + q;
+      window.open("https://" + q, "_blank");
       return;
     }
     const url = (engine && engine.url) || "https://www.baidu.com/s?wd={1}";
-    window.location.href = url.replace("{1}", encodeURIComponent(q));
+    window.open(url.replace("{1}", encodeURIComponent(q)), "_blank");
   }
 
   let _pickBtnImg = null;
